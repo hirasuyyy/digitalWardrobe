@@ -1,3 +1,4 @@
+from fastapi.responses import HTMLResponse
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 os.environ["OMP_NUM_THREADS"] = "1"
@@ -24,8 +25,8 @@ cloudinary.config(
   api_secret = "**********" 
 )
 # --- API KEYS ---
-GEMINI_API_KEY = "AIzaSyD_SENIN_GEMINI_KEYIN" 
-REMOVE_BG_API_KEY = "SENIN_REMOVEBG_KEYIN" 
+GEMINI_API_KEY = "AIzaSyBKWsm-9gyNslpXWKdgFAZs7I9zxX4asLI" 
+REMOVE_BG_API_KEY = "FvDk6BLEEFbJVpJLtvWj9gjk" 
 
 GEMINI_ACTIVE = False
 try:
@@ -71,6 +72,10 @@ def init_db():
 init_db()
 
 app = FastAPI()
+@app.get("/", response_class=HTMLResponse)
+async def read_root():
+    with open("index.html", "r") as f:
+        return f.read()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
