@@ -8,5 +8,4 @@ rembg
 cloudinary
 pillow
 numpy
-jinja2
-aiofiles
+opencv-python-headless
