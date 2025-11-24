@@ -1,8 +1,7 @@
-from fastapi.responses import HTMLResponse
-import os
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 os.environ["OMP_NUM_THREADS"] = "1"
 
+import os
 import uuid
 import sqlite3
 import random
@@ -10,6 +9,7 @@ import json
 import requests
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from PIL import Image, ImageOps
 from io import BytesIO
