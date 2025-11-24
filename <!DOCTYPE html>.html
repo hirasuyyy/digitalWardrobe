@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIGITAL WARDROBE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        /* TEMA */
+        :root { --bg: #050505; --text: #f0f0f0; --accent: #c6a87c; --panel: #0f0f0f; }
+        body.male-theme { --accent: #1e3a8a; --panel: #0f172a; }
+
+        body { background: var(--bg); color: var(--text); font-family: 'Montserrat', sans-serif; overflow: hidden; height: 100vh; transition: 0.5s; }
+        h1, h2, h3, .serif { font-family: 'Cinzel', serif; }
+
+        /* LANDING PAGE */
+        #landing-page {
+            position: fixed; inset: 0; z-index: 100; background: #000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; transition: opacity 0.8s ease-out;
+        }
+        .landing-logo { font-size: 50px; color: white; margin-bottom: 20px; letter-spacing: 5px; }
+        .landing-text { color: #888; font-size: 12px; max-width: 300px; line-height: 1.6; margin-bottom: 40px; text-transform: uppercase; letter-spacing: 1px; }
+        .enter-btn { padding: 12px 40px; border: 1px solid var(--accent); color: white; font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 2px; transition: 0.3s; cursor: pointer; }
+        .enter-btn:hover { background: var(--accent); color: black; }
+
+        /* APP FRAME */
+        .app-frame { display: flex; height: 100%; width: 100%; max-width: 1200px; margin: 0 auto; background: #000; border-left: 1px solid #222; border-right: 1px solid #222; }
+        .sidebar { width: 360px; background: var(--panel); display: flex; flex-direction: column; border-right: 1px solid #222; z-index: 20; transition: background 0.5s; }
+        
+        .stage { flex: 1; position: relative; background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%); display: flex; justify-content: center; align-items: center; }
+        #collage-container { width: 100%; height: 100%; position: relative; }
+        
+        /* ZONES */
+        .zone { position: absolute; display: flex; justify-content: center; align-items: center; cursor: grab; transition: all 0.5s ease; }
+        .zone:active { cursor: grabbing; transform: scale(1.05); }
+        .zone img { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.7)); transition: transform 0.3s; }
+        
+        /* LAYOUT */
+        #zone-top { top: 12%; left: 30%; width: 40%; height: 35%; z-index: 10; }
+        #zone-bottom { top: 45%; left: 30%; width: 40%; height: 40%; z-index: 9; }
+        #zone-shoes { bottom: 2%; left: 30%; width: 40%; height: 20%; z-index: 11; }
+        #zone-bag { top: 40%; left: 5%; width: 25%; height: 30%; z-index: 12; transform: rotate(-5deg); }
+        #zone-jewelry { top: 12%; left: 70%; width: 20%; height: 20%; z-index: 13; }
+        #zone-hat { top: 2%; left: 5%; width: 20%; height: 15%; z-index: 14; transform: rotate(10deg); }
+        #zone-gloves { top: 50%; left: 75%; width: 20%; height: 20%; z-index: 8; }
+        #zone-coat { top: 10%; right: 5%; width: 30%; height: 40%; z-index: 5; opacity: 0.6; }
+        #zone-tights { bottom: 10%; left: 35%; width: 30%; height: 30%; z-index: 1; opacity: 0.4; }
+
+        .shop-badge { position: absolute; bottom: -10px; right: -10px; background: var(--accent); color: white; font-size: 9px; font-weight: bold; padding: 4px 10px; border-radius: 20px; cursor: pointer; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        /* UI */
+        .grid-item { position: relative; background: #181818; border-radius: 4px; overflow: hidden; aspect-ratio: 3/4; }
+        .grid-item img { width: 100%; height: 100%; object-fit: contain; }
+        .action-btn { position: absolute; top: 4px; width: 22px; height: 22px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; opacity: 0; transition: 0.2s; border: 1px solid #333; font-size: 10px; }
+        .grid-item:hover .action-btn { opacity: 1; }
+        .btn-del { right: 4px; background: #7f1d1d; color: white; }
+        .btn-edit { right: 30px; background: #222; color: white; }
+
+        .scenario-group { display: none; flex-direction: column; gap: 5px; padding-bottom: 10px; }
+        .sub-btn { text-align: left; padding: 10px; background: #181818; color: #aaa; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; border-radius: 6px; transition: 0.2s; display: flex; justify-content: space-between; }
+        .sub-btn:hover { background: #222; color: var(--accent); padding-left: 15px; border-left: 2px solid var(--accent); }
+
+        .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(15px); z-index: 50; display: none; flex-direction: column; justify-content: center; align-items: center; }
+        .modal-content { background: #111; border: 1px solid #333; padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; position: relative; max-height: 90vh; overflow-y: auto; }
+        .tag-btn { border: 1px solid #333; padding: 8px; text-align: center; font-size: 9px; cursor: pointer; transition: 0.2s; text-transform: uppercase; background: #222; color: #aaa; }
+        .tag-btn.active { background: var(--accent); color: white; font-weight: bold; }
+
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 10px; }
+        .cal-cell { aspect-ratio: 1; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; }
+        .cal-cell:hover { border-color: var(--accent); }
+        .cal-num { position: absolute; top: 2px; left: 4px; font-size: 10px; color: #555; }
+        .cal-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
+
+        .nav-bar { display: grid; grid-template-columns: repeat(4, 1fr); background: #0a0a0a; border-top: 1px solid #222; padding: 10px 0; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: #666; cursor: pointer; transition: 0.3s; }
+        .nav-item:hover, .nav-item.active { color: var(--accent); }
+        
+        .gender-pill { background: #222; border-radius: 20px; display: flex; padding: 2px; }
+        .g-opt { padding: 4px 12px; font-size: 9px; border-radius: 18px; cursor: pointer; color: #666; font-weight: bold; }
+        .g-opt.active { background: var(--accent); color: white; }
+        
+        .weather-opt { padding: 6px 12px; background: #222; color: #666; border-radius: 20px; font-size: 10px; cursor: pointer; border: 1px solid #333; margin-right: 5px; flex-shrink: 0; }
+        .weather-opt.active { background: var(--accent); color: white; border-color: var(--accent); }
+        
+        .scan-line { position: absolute; width: 100%; height: 2px; background: var(--accent); top: 0; animation: scan 1.5s linear infinite; box-shadow: 0 0 15px var(--accent); display: none; }
+        @keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }
+        
+        .travel-select { width: 100%; background: #222; color: #ccc; font-size: 10px; border: 1px solid #333; padding: 5px; border-radius: 4px; outline: none; }
+        .premium-card { border: 1px solid var(--accent); box-shadow: 0 0 30px rgba(128, 0, 32, 0.4); text-align: center; }
+        .progress-container { width: 100%; background: #222; height: 4px; border-radius: 2px; margin-top: 5px; }
+        .progress-bar { height: 100%; background: var(--accent); width: 0%; transition: width 0.5s; }
+        .pro-badge { font-size: 8px; background: linear-gradient(45deg, gold, #b8860b); color: black; padding: 2px 6px; border-radius: 4px; margin-left: 5px; font-weight: bold; display: none; }
+        .pay-input { width: 100%; background: #222; border: 1px solid #333; padding: 10px; color: white; font-size: 12px; border-radius: 6px; margin-bottom: 10px; }
+        .pay-input:focus { border-color: var(--accent); outline: none; }
+    </style>
+</head>
+<body>
+
+<div id="landing-page">
+    <h1 class="landing-logo ">DIGITAL WARDROBE</h1>
+    <p class="landing-text">UPLOAD PHOTOS OF YOUR OUTFITS AND GET READY-MADE LOOKS IN YOUR DIGITAL WARDROBE</p>
+    <button class="enter-btn px-6 py-3 
+         rounded-lg 
+         bg-[#c9b037]
+         border border-[rgba(255,0,80,0.35)]
+         text-[#e8d5e8]
+         font-semibold tracking-wide 
+         shadow-[0_0_18px_rgba(255,0,90,0.15)]
+         hover:bg-[#a67509]
+         hover:text-white
+         hover:border-[rgba(255,0,110,0.6)]
+         hover:shadow-[0_0_30px_rgba(255,0,110,0.35)]
+         transition-all duration-300 ease-out
+         hover:-translate-y-1 hover:scale-[1.02]" onclick="enterApp()">ENTER STUDIO</button>
+</div>
+
+<div class="app-frame">
+    <div class="sidebar">
+        <div class="p-6 border-b border-[#222] flex justify-between items-center">
+            <div>
+                <h1 class="text-xl text-white serif tracking-widest" id="appTitle">DIGITAL<span style="color:var(--accent)">WARDROBE</span></h1>
+                <div class="flex items-center">
+                    <p class="text-[8px] text-gray-500 mt-1 uppercase tracking-[0.2em]">AI Stylist</p>
+                    <span id="proLabel" class="pro-badge">PRO</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="gender-pill">
+                    <div onclick="setGender('female')" class="g-opt active" id="btnFem">F</div>
+                    <div onclick="setGender('male')" class="g-opt" id="btnMasc">M</div>
+                </div>
+                <button onclick="openSettings()" class="text-gray-500 hover:text-white"><i class="fa-solid fa-gear text-lg"></i></button>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="text-xs text-gray-400 uppercase">Wardrobe</h3>
+                <button onclick="checkLimitAndOpen()" class="text-[10px] border border-[#333] px-3 py-1 rounded hover:border-white transition text-gray-400">+ ADD ITEM</button>
+            </div>
+            <div class="mb-6">
+                <div class="flex justify-between text-[9px] text-gray-500 mb-1"><span>Free Plan</span><span id="limitText">0/3</span></div>
+                <div class="progress-container"><div id="limitBar" class="progress-bar"></div></div>
+            </div>
+            <div class="mb-4 text-[9px] text-gray-500 flex gap-2 items-center justify-between border border-[#222] p-2 rounded bg-[#111]">
+                <span id="weatherDisplay">☀️ Sunny / Summer</span>
+            </div>
+            <div id="wardrobeGrid" class="grid grid-cols-3 gap-2"></div>
+        </div>
+
+        <div class="p-4 border-t border-[#222] h-1/3 overflow-y-auto">
+            <div id="menuTitle" class="text-xs text-gray-500 uppercase tracking-widest mb-3 text-center flex justify-between items-center">
+                <span>Select Activity</span>
+                <button onclick="openModal('calendarModal'); renderCalendar();" class="text-[var(--accent)]"><i class="fa-regular fa-calendar text-lg"></i></button>
+            </div>
+
+            <div id="menu-night" class="scenario-group">
+                <button onclick="generateOutfit('night_cocktail')" class="sub-btn">Cocktail Bar <i class="fa-solid fa-martini-glass"></i></button>
+                <button onclick="generateOutfit('night_party')" class="sub-btn">Club / Party <i class="fa-solid fa-music"></i></button>
+                <button onclick="generateOutfit('night_dinner')" class="sub-btn">Dinner Date <i class="fa-solid fa-utensils"></i></button>
+                <button onclick="generateOutfit('night_lounge')" class="sub-btn">Lounge / Chill <i class="fa-solid fa-wine-glass"></i></button>
+                <button onclick="generateOutfit('night_concert')" class="sub-btn">Concert <i class="fa-solid fa-ticket"></i></button>
+                <button onclick="generateOutfit('gala_wedding')" class="sub-btn border border-yellow-600 text-yellow-500">✨ Gala / Wedding</button>
+            </div>
+
+            <div id="menu-sport" class="scenario-group">
+                <button onclick="generateOutfit('sport_gym')" class="sub-btn">Gym / Cardio <i class="fa-solid fa-dumbbell"></i></button>
+                <button onclick="generateOutfit('sport_run')" class="sub-btn">Run / Walk <i class="fa-solid fa-person-running"></i></button>
+                <button onclick="generateOutfit('sport_tennis')" class="sub-btn">Tennis / Golf <i class="fa-solid fa-table-tennis-paddle-ball"></i></button>
+                <button onclick="generateOutfit('sport_yoga')" class="sub-btn">Yoga / Pilates <i class="fa-solid fa-spa"></i></button>
+                <button onclick="generateOutfit('sport_hike')" class="sub-btn">Hiking <i class="fa-solid fa-mountain"></i></button>
+                <button onclick="generateOutfit('ski')" class="sub-btn text-blue-400">❄️ Ski Trip</button>
+            </div>
+
+            <div id="menu-social" class="scenario-group">
+                <button onclick="generateOutfit('school_casual')" class="sub-btn">School / University <i class="fa-solid fa-graduation-cap"></i></button>
+                <button onclick="generateOutfit('social_office')" class="sub-btn">Work / Office <i class="fa-solid fa-briefcase"></i></button>
+                <button onclick="generateOutfit('social_coffee')" class="sub-btn">Coffee Date <i class="fa-solid fa-mug-hot"></i></button>
+                <button onclick="generateOutfit('social_brunch')" class="sub-btn">Brunch <i class="fa-solid fa-croissant"></i></button>
+                <button onclick="generateOutfit('social_library')" class="sub-btn">Library Study <i class="fa-solid fa-book"></i></button>
+                <button onclick="generateOutfit('social_art')" class="sub-btn">Art Gallery <i class="fa-solid fa-palette"></i></button>
+            </div>
+            
+            <div id="menu-travel" class="scenario-group">
+                <button onclick="openTravelPlanner()" class="sub-btn border border-indigo-900 text-indigo-400">Plan New Trip <i class="fa-solid fa-plus"></i></button>
+                <button onclick="generateOutfit('travel_city')" class="sub-btn">City Break <i class="fa-solid fa-city"></i></button>
+                <button onclick="generateOutfit('travel_summer')" class="sub-btn text-yellow-500">Summer / Beach <i class="fa-solid fa-umbrella-beach"></i></button>
+                <button onclick="generateOutfit('travel_culture')" class="sub-btn text-green-500">Cultural / Walking <i class="fa-solid fa-landmark"></i></button>
+            </div>
+
+            <div class="nav-bar">
+                <div onclick="switchTab('night')" class="nav-item active" id="nav-night"><i class="fa-solid fa-moon"></i><span>Night</span></div>
+                <div onclick="switchTab('sport')" class="nav-item" id="nav-sport"><i class="fa-solid fa-person-running"></i><span>Sport</span></div>
+                <div onclick="switchTab('social')" class="nav-item" id="nav-social"><i class="fa-solid fa-user-group"></i><span>Social</span></div>
+                <div onclick="switchTab('travel')" class="nav-item" id="nav-travel"><i class="fa-solid fa-plane"></i><span>Travel</span></div>
+            </div>
+
+            <div class="flex gap-2 mt-2 border-t border-[#222] pt-2 hidden overflow-x-auto" id="option-box"></div>
+        </div>
+    </div>
+
+    <div class="stage">
+        <button onclick="captureAndCalendar()" class="absolute top-4 right-4 z-50 text-xs text-gray-500 hover:text-white border border-[#333] px-3 py-1 rounded-full bg-black"><i class="fa-solid fa-calendar-check"></i> SAVE</button>
+        
+        
+        <div id="collage-container">
+            <div id="zone-hat" class="zone draggable"></div><div id="zone-jewelry" class="zone draggable"></div><div id="zone-top" class="zone draggable"></div><div id="zone-coat" class="zone draggable"></div><div id="zone-gloves" class="zone draggable"></div><div id="zone-bag" class="zone draggable"></div><div id="zone-bottom" class="zone draggable"></div><div id="zone-tights" class="zone draggable"></div><div id="zone-shoes" class="zone draggable"></div>
+            <div id="placeholderText" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-30 text-center">
+                <p class="serif text-3xl text-[#333]">EDITORIAL</p>
+                <p class="text-[10px] uppercase tracking-[0.5em] text-gray-600 mt-2">Select Scenario</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="travelModal" class="modal-bg">
+    <div class="modal-content">
+        <h2 class="text-lg serif text-white mb-4 text-center">Trip Planner</h2>
+        <div class="mb-4 flex gap-2">
+            <input type="text" id="tripDest" placeholder="Destination" class="bg-[#222] text-white text-xs p-2 rounded w-full border border-[#333]">
+            <div class="w-full">
+                <label class="text-[8px] text-gray-500 block">Start Date</label>
+                <input type="date" id="tripStart" class="bg-[#222] text-white text-xs p-2 rounded w-full border border-[#333]">
+            </div>
+            <div class="w-20">
+                <label class="text-[8px] text-gray-500 block">Days</label>
+                <input type="number" id="tripDays" value="3" min="1" max="7" onchange="renderTripDays()" class="bg-[#222] text-white text-xs p-2 rounded w-full border border-[#333]">
+            </div>
+        </div>
+        <div id="tripDaysContainer" class="space-y-3 max-h-60 overflow-y-auto pr-1"></div>
+        
+        <button onclick="createItinerary()" class="w-full mt-4 py-3 bg-[var(--accent)] text-white text-xs font-bold tracking-widest rounded-lg">GENERATE PLAN</button>
+        <button onclick="closeModal('travelModal')" class="w-full mt-2 text-gray-500 text-[9px]">CLOSE</button>
+    </div>
+</div>
+
+<div id="itineraryModal" class="modal-bg">
+    <div class="modal-content">
+        <h2 class="text-lg serif text-white mb-4 text-center" id="tripTitleDisplay">Trip Plan</h2>
+        <div id="finalItinerary" class="max-h-80 overflow-y-auto space-y-2"></div>
+        <button onclick="saveTripToCalendar()" class="w-full mt-4 py-2 bg-white text-black text-xs font-bold rounded">SAVE TO CALENDAR</button>
+        <button onclick="closeModal('itineraryModal')" class="w-full mt-2 text-gray-500 text-[9px]">CLOSE</button>
+    </div>
+</div>
+
+<div id="calendarModal" class="modal-bg">
+    <div class="modal-content">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg serif text-white">Calendar</h2>
+            <div class="flex gap-2">
+                <select id="calMonth" class="bg-[#222] text-white text-xs border border-[#333] p-1 rounded" onchange="renderCalendar()">
+                    <option value="0">January</option><option value="1">February</option><option value="2">March</option>
+                    <option value="3">April</option><option value="4">May</option><option value="5">June</option>
+                    <option value="6">July</option><option value="7">August</option><option value="8">September</option>
+                    <option value="9">October</option><option value="10">November</option><option value="11">December</option>
+                </select>
+                <select id="calYear" class="bg-[#222] text-white text-xs border border-[#333] p-1 rounded" onchange="renderCalendar()">
+                    <option value="2025">2025</option><option value="2026">2026</option><option value="2027">2027</option>
+                    <option value="2028">2028</option><option value="2029">2029</option><option value="2030">2030</option>
+                </select>
+            </div>
+        </div>
+        <div class="calendar-grid" id="calGrid"></div>
+        <button onclick="downloadOnly()" class="w-full mt-4 text-[10px] text-gray-500 underline">Download Image Only</button>
+        <button onclick="closeModal('calendarModal')" class="w-full mt-2 text-gray-500 text-[9px]">CLOSE</button>
+    </div>
+</div>
+
+<div id="settingsModal" class="modal-bg">
+    <div class="modal-content">
+        <h2 class="text-lg serif text-white mb-4">Settings</h2>
+        
+        <div class="bg-[#1a1a1a] p-3 rounded border border-[#333] mb-4 flex justify-between items-center">
+            <div>
+                <p class="text-[10px] text-gray-400 uppercase">Membership</p>
+                <p class="text-xs text-white font-bold" id="membershipStatus">Free Plan</p>
+            </div>
+            <button onclick="openPayment()" class="text-[var(--accent)] text-[10px] font-bold border border-[var(--accent)] px-2 py-1 rounded">UPGRADE</button>
+        </div>
+
+        <div class="space-y-4">
+            <div class="flex justify-between items-center border-b border-[#222] pb-2">
+                <div>
+                    <span class="text-[10px] uppercase text-[var(--accent)] block">Budget</span>
+                    <span class="text-[8px] text-gray-600">It customizes suggestions according to your budget.</span>
+                </div>
+                <select id="budgetSel" class="bg-[#111] text-white text-xs border border-[#333] p-1 rounded"><option value="low">Economy</option><option value="mid" selected>Standard</option><option value="high">Luxury</option></select>
+            </div>
+            <div class="weather-sec">
+                <p class="text-[9px] text-gray-500 uppercase tracking-widest mb-2">Season</p>
+                <div class="flex gap-2 overflow-x-auto no-scrollbar">
+                    <button onclick="setWeather('season', 'summer')" class="weather-opt w-opt-s active">Summer</button>
+                    <button onclick="setWeather('season', 'winter')" class="weather-opt w-opt-s">Winter</button>
+                    <button onclick="setWeather('season', 'spring')" class="weather-opt w-opt-s">Spring</button>
+                    <button onclick="setWeather('season', 'fall')" class="weather-opt w-opt-s">Autumn</button>
+                </div>
+            </div>
+            <div class="weather-sec">
+                <p class="text-[9px] text-gray-500 uppercase tracking-widest mb-2">Conditions</p>
+                <div class="flex gap-2">
+                    <button onclick="setWeather('cond', 'sunny')" class="weather-opt w-opt-c active">Sunny ☀️</button>
+                    <button onclick="setWeather('cond', 'rainy')" class="weather-opt w-opt-c">Rainy 🌧️</button>
+                    <button onclick="setWeather('cond', 'snowy')" class="weather-opt w-opt-c">Snowy ❄️</button>
+                </div>
+            </div>
+        </div>
+        <button onclick="closeModal('settingsModal')" class="w-full mt-6 py-3 bg-[#222] text-white text-xs uppercase hover:bg-[#333]">Save</button>
+    </div>
+</div>
+
+<div id="paymentModal" class="modal-bg">
+    <div class="modal-content border border-[var(--accent)] shadow-[0_0_40px_rgba(128,0,32,0.3)]">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg serif text-[var(--accent)]">Secure Checkout</h2>
+            <i class="fa-brands fa-cc-apple-pay text-white text-2xl"></i>
+        </div>
+        <p class="text-xs text-gray-400 mb-4">Upgrade to <span class="text-white font-bold">PRO</span> for unlimited access.</p>
+        <div class="space-y-3">
+            <input type="text" class="pay-input" placeholder="Card Holder Name">
+            <input type="text" class="pay-input" placeholder="0000 0000 0000 0000">
+            <div class="flex gap-2">
+                <input type="text" class="pay-input" placeholder="MM/YY">
+                <input type="text" class="pay-input" placeholder="CVC">
+            </div>
+        </div>
+        <div class="flex justify-between items-center mt-4 mb-4">
+            <span class="text-xs text-gray-500">Total</span>
+            <span class="text-lg font-bold text-white">3.99 €</span>
+        </div>
+        <button onclick="processPayment()" id="payBtn" class="w-full py-3 bg-[var(--accent)] text-white font-bold text-xs rounded shadow-lg">PAY NOW</button>
+        <button onclick="closeModal('paymentModal')" class="w-full mt-2 text-gray-600 text-[9px]">CANCEL</button>
+    </div>
+</div>
+
+<div id="uploadModal" class="modal-bg">
+    <div class="modal-content relative">
+        <h2 class="text-lg serif text-center text-white mb-4" id="modalTitle">Add Item</h2>
+        <div class="flex justify-center mb-4 relative">
+             <img id="previewImg" class="h-24 w-full object-contain bg-[#050505] border border-[#222] rounded-lg">
+             <div id="scanLine" class="scan-line"></div>
+        </div>
+        <p id="aiStatus" class="text-center text-[9px] text-[var(--accent)] mb-4 animate-pulse">DETECTING ITEM...</p>
+
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="text-[9px] text-gray-500 block mb-1 uppercase">Category</label>
+                <div class="grid grid-cols-2 gap-1">
+                    <button onclick="setTag('cat', 'top')" class="tag-btn cat-btn" id="btn-top">Top</button>
+                    <button onclick="setTag('cat', 'bottom')" class="tag-btn cat-btn" id="btn-bottom">Bottom</button>
+                    <button onclick="setTag('cat', 'shoes')" class="tag-btn cat-btn" id="btn-shoes">Shoes</button>
+                    <button onclick="setTag('cat', 'bag')" class="tag-btn cat-btn" id="btn-bag">Bag</button>
+                    <button onclick="setTag('cat', 'jewelry')" class="tag-btn cat-btn" id="btn-jewelry">Jewel</button>
+                    <button onclick="setTag('cat', 'hat')" class="tag-btn cat-btn" id="btn-hat">Hat</button>
+                </div>
+            </div>
+            <div>
+                <label class="text-[9px] text-gray-500 block mb-1 uppercase">Tags</label>
+                <textarea id="tagsInput" class="w-full h-24 bg-[#222] border border-[#333] text-white text-xs p-2 rounded resize-none" placeholder="black, leather..."></textarea>
+            </div>
+        </div>
+        
+        <div class="mb-4">
+            <input type="number" id="priceInput" class="w-full bg-[#222] border border-[#333] text-white text-xs p-2 rounded" placeholder="Price">
+        </div>
+
+        <button onclick="finalizeUpload()" id="saveBtn" class="w-full py-3 bg-white text-black text-xs font-bold tracking-widest hover:bg-gray-200 rounded-lg" disabled>WAITING FOR AI...</button>
+        <button onclick="closeModal('uploadModal')" class="w-full mt-2 py-2 text-gray-500 text-[9px] uppercase">CANCEL</button>
+    </div>
+</div>
+
+<div id="premiumModal" class="modal-bg">
+    <div class="modal-content text-center border border-[var(--accent)] p-8 shadow-[0_0_40px_rgba(198,168,124,0.2)]">
+        <h2 class="text-3xl text-[var(--accent)] serif mb-2"><span class="text-white">+</span></h2>
+        <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em]">Limit Reached</p>
+        <button onclick="openPayment(); closeModal('premiumModal');" class="w-full py-4 bg-gradient-to-r from-[var(--accent)] to-[#a38655] text-black font-bold text-sm tracking-widest rounded-xl shadow-lg hover:scale-105 transition mt-6">UPGRADE - 69.99 TL</button>
+        <button onclick="closeModal('premiumModal')" class="w-full text-[10px] text-gray-500 uppercase mt-3">Maybe Later</button>
+    </div>
+</div>
+
+<input type="file" id="itemInput" class="hidden">
+
+<script>
+    let uploadFile = null;
+    let uploadData = { cat: '', vibe: '' };
+    let currentOutfits = [];
+    let itemCount = 0;
+    let currentGender = 'female';
+    let capturedImage = null;
+    let calendarEvents = {}; 
+    let currentWeather = { season: 'summer', cond: 'sunny' };
+    let editModeId = null;
+    
+    let isPremium = localStorage.getItem('isPremium') === 'true';
+    let FREE_LIMIT = 3;
+    let PREMIUM_LIMIT = 100;
+
+    const travelActivities = [
+        { val: 'social_coffee', text: '☕ Morning Coffee' },
+        { val: 'travel_city', text: '🏙️ City Walk' },
+        { val: 'travel_beach', text: '🏖️ Beach Time' },
+        { val: 'travel_summer', text: '👙 Pool/Swim' },
+        { val: 'travel_culture', text: '🏛️ Museum/Culture' },
+        { val: 'night_dinner', text: '🍷 Dinner' },
+        { val: 'night_party', text: '🪩 Party' }
+    ];
+
+    function enterApp() {
+        document.getElementById('landing-page').style.opacity = '0';
+        setTimeout(() => document.getElementById('landing-page').style.display = 'none', 800);
+    }
+
+    window.onload = async () => {
+        loadWardrobe();
+        fetchWeather();
+        
+        const today = new Date();
+        document.getElementById('calMonth').value = today.getMonth();
+        document.getElementById('calYear').value = today.getFullYear();
+        renderCalendar();
+        switchTab('night');
+        updatePremiumUI();
+    };
+
+    function openPayment() { document.getElementById('paymentModal').style.display = 'flex'; }
+    
+    function processPayment() {
+        const btn = document.getElementById('payBtn');
+        btn.innerText = "PROCESSING...";
+        setTimeout(() => {
+            isPremium = true;
+            localStorage.setItem('isPremium', 'true');
+            updatePremiumUI();
+            closeModal('paymentModal');
+            closeModal('settingsModal');
+            loadWardrobe();
+            alert("Payment Successful! You are now PRO.");
+        }, 2000);
+    }
+
+    function updatePremiumUI() {
+        if(isPremium) {
+            document.getElementById('proLabel').style.display = 'inline-block';
+            const status = document.getElementById('membershipStatus');
+            if(status) status.innerText = "PRO Member";
+        }
+    }
+
+    function checkLimitAndOpen() {
+        let limit = isPremium ? PREMIUM_LIMIT : FREE_LIMIT;
+        if (itemCount >= limit) openPayment();
+        else {
+            editModeId = null;
+            document.getElementById('modalTitle').innerText = "Add Item";
+            document.getElementById('saveBtn').innerText = "SAVE";
+            document.getElementById('itemInput').click();
+        }
+    }
+
+    function setWeather(type, val) {
+        if(type === 'season') {
+            currentWeather.season = val;
+            document.querySelectorAll('.w-opt-s').forEach(b => b.classList.remove('active'));
+        } else {
+            currentWeather.cond = val;
+            document.querySelectorAll('.w-opt-c').forEach(b => b.classList.remove('active'));
+        }
+        event.target.classList.add('active');
+        updateWeatherUI();
+    }
+    function updateWeatherUI() {
+        let icon = currentWeather.cond === 'sunny' ? '☀️' : (currentWeather.cond === 'rainy' ? '🌧️' : '❄️');
+        document.getElementById('weatherDisplay').innerText = `${icon} ${currentWeather.season.toUpperCase()}`;
+    }
+
+    function openTravelPlanner() { renderTripDays(); document.getElementById('travelModal').style.display = 'flex'; }
+    function renderTripDays() {
+        const days = document.getElementById('tripDays').value;
+        const container = document.getElementById('tripDaysContainer');
+        container.innerHTML = '';
+        let opts = travelActivities.map(a => `<option value="${a.val}">${a.text}</option>`).join('');
+        for(let i=1; i<=days; i++) {
+            container.innerHTML += `
+            <div class="bg-[#181818] p-3 rounded border border-[#333] mb-2">
+                <p class="text-[10px] text-[var(--accent)] font-bold mb-2">DAY ${i}</p>
+                <div class="flex gap-2">
+                    <div class="flex-1"><label class="text-[8px] text-gray-500">AM</label><select id="d${i}_m" class="travel-select">${opts}</select></div>
+                    <div class="flex-1"><label class="text-[8px] text-gray-500">PM</label><select id="d${i}_e" class="travel-select">${opts}</select></div>
+                </div>
+            </div>`;
+        }
+    }
+    function createItinerary() {
+        const days = document.getElementById('tripDays').value;
+        const dest = document.getElementById('tripDest').value || "Trip";
+        const list = document.getElementById('finalItinerary');
+        list.innerHTML = '';
+        document.getElementById('tripTitleDisplay').innerText = dest + " Plan";
+        for(let i=1; i<=days; i++) {
+            let m = document.getElementById(`d${i}_m`).value;
+            let e = document.getElementById(`d${i}_e`).value;
+            let mt = travelActivities.find(o=>o.val==m).text;
+            let et = travelActivities.find(o=>o.val==e).text;
+            list.innerHTML += `
+            <div class="mb-3 border-l-2 border-[var(--accent)] pl-3 bg-[#1a1a1a] p-2 rounded flex justify-between items-center">
+                <div>
+                    <h4 class="text-xs text-white font-bold mb-1">Day ${i}</h4>
+                    <div class="text-[10px] text-gray-400">🌅 ${mt}</div>
+                    <div class="text-[10px] text-gray-400">🌙 ${et}</div>
+                </div>
+                <div class="flex flex-col gap-1">
+                     <button class="text-[8px] border border-[#333] px-2 py-1 rounded hover:border-white text-gray-400" onclick="generateOutfit('${m}'); closeModal('itineraryModal')">VIEW AM</button>
+                     <button class="text-[8px] border border-[#333] px-2 py-1 rounded hover:border-white text-gray-400" onclick="generateOutfit('${e}'); closeModal('itineraryModal')">VIEW PM</button>
+                </div>
+            </div>`;
+        }
+        closeModal('travelModal');
+        document.getElementById('itineraryModal').style.display = 'flex';
+    }
+    function saveTripToCalendar() {
+        const startVal = document.getElementById('tripStart').value;
+        if(!startVal) return alert("Select Start Date!");
+        const dest = document.getElementById('tripDest').value || "Trip";
+        const days = document.getElementById('tripDays').value;
+        let date = new Date(startVal);
+        for(let i=0; i<days; i++) {
+             let dayStr = date.toISOString().split('T')[0];
+             calendarEvents[dayStr] = { note: `${dest} Day ${i+1}` };
+             date.setDate(date.getDate() + 1);
+        }
+        let firstDate = new Date(startVal);
+        document.getElementById('calMonth').value = firstDate.getMonth();
+        document.getElementById('calYear').value = firstDate.getFullYear();
+        renderCalendar();
+        alert("Trip saved to calendar!");
+        closeModal('itineraryModal');
+    }
+
+    function renderCalendar() {
+        const grid = document.getElementById('calGrid');
+        if(!grid) return;
+        grid.innerHTML = '';
+        const month = parseInt(document.getElementById('calMonth').value);
+        const year = parseInt(document.getElementById('calYear').value);
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const firstDay = new Date(year, month, 1).getDay(); 
+        const startOffset = firstDay === 0 ? 6 : firstDay - 1; 
+
+        for(let i=0; i<startOffset; i++) grid.innerHTML += `<div class="bg-transparent"></div>`;
+
+        for(let i=1; i<=daysInMonth; i++) {
+            let mStr = (month + 1).toString().padStart(2, '0');
+            let dStr = i.toString().padStart(2, '0');
+            let dateKey = `${year}-${mStr}-${dStr}`;
+            let content = `<span class="cal-num">${i}</span>`;
+            if(calendarEvents[dateKey]) {
+                if(calendarEvents[dateKey].img) {
+                     content += `<img src="${calendarEvents[dateKey].img}" class="cal-img">`;
+                     content += `<button onclick="deleteEvent('${dateKey}', event)" class="absolute top-0 right-0 text-red-500 text-[8px] p-1 hover:bg-black font-bold">x</button>`;
+                }
+                else content += `<div class="absolute bottom-2 left-0 w-full text-[8px] text-center text-[var(--accent)] truncate px-1">${calendarEvents[dateKey].note}</div>`;
+            }
+            grid.innerHTML += `<div class="cal-cell" onclick="saveToDate('${dateKey}')">${content}</div>`;
+        }
+    }
+    
+    function deleteEvent(dateKey, e) {
+        e.stopPropagation();
+        if(confirm("Delete event?")) { delete calendarEvents[dateKey]; renderCalendar(); }
+    }
+    function captureAndCalendar() {
+        const node = document.querySelector('.stage');
+        html2canvas(node, { backgroundColor: null }).then(canvas => {
+            capturedImage = canvas.toDataURL();
+            document.getElementById('calendarModal').style.display = 'flex';
+            renderCalendar();
+        });
+    }
+    function saveToDate(dateKey) {
+        if(capturedImage) {
+            calendarEvents[dateKey] = { img: capturedImage };
+            renderCalendar();
+            capturedImage = null; 
+            alert(`Saved to ${dateKey}!`);
+        } else if (calendarEvents[dateKey]?.note) {
+            alert(calendarEvents[dateKey].note);
+        }
+    }
+    function downloadOnly() {
+        if(!capturedImage) return alert("Capture first!");
+        const link = document.createElement('a');
+        link.download = 'vogue_look.png';
+        link.href = capturedImage;
+        link.click();
+    }
+
+    function switchTab(tabName) {
+        document.querySelectorAll('.scenario-group').forEach(m => m.style.display = 'none');
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(`menu-${tabName}`).style.display = 'flex';
+        document.getElementById(`nav-${tabName}`).classList.add('active');
+    }
+    function toggleMenu(name) { switchTab(name); }
+
+    function setGender(g) {
+        currentGender = g;
+        document.getElementById('btnFem').classList.toggle('active', g==='female');
+        document.getElementById('btnMasc').classList.toggle('active', g==='male');
+        if(g==='male') {
+            document.body.classList.add('male-theme');
+            document.getElementById('brandLogo').innerText = "";
+            document.getElementById('appTitle').innerHTML = `GQ<span style="color:var(--accent)">.AI</span>`;
+        } else {
+            document.body.classList.remove('male-theme');
+            document.getElementById('brandLogo').innerText = "";
+            document.getElementById('appTitle').innerHTML = `DIGITAL<span style="color:var(--accent)">WARDROBE</span>`;
+        }
+        loadWardrobe(); 
+    }
+
+    function openSettings() { document.getElementById('settingsModal').style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    function editItem(id, cat, tags, price, url) {
+        document.getElementById('uploadModal').style.display = 'flex';
+        document.getElementById('modalTitle').innerText = "Edit Item";
+        document.getElementById('previewImg').src = url;
+        document.getElementById('priceInput').value = price;
+        document.getElementById('tagsInput').value = tags;
+        editModeId = id;
+        uploadFile = null;
+    }
+
+    document.getElementById('itemInput').onchange = async (e) => {
+        uploadFile = e.target.files[0];
+        if(uploadFile) {
+            const reader = new FileReader();
+            reader.onload = (ev) => document.getElementById('previewImg').src = ev.target.result;
+            reader.readAsDataURL(uploadFile);
+            document.getElementById('uploadModal').style.display = 'flex';
+            document.getElementById('scanLine').style.display = 'block';
+            const formData = new FormData();
+            formData.append('file', uploadFile);
+            try {
+                const res = await fetch('http://127.0.0.1:8000/analyze', { method: 'POST', body: formData });
+                const data = await res.json();
+                if(data.category) setTag('cat', data.category);
+                if(data.tags) document.getElementById('tagsInput').value = data.tags;
+                document.getElementById('aiStatus').innerText = "AI COMPLETE";
+                document.getElementById('saveBtn').disabled = false;
+            } catch(e) { document.getElementById('saveBtn').disabled = false; }
+            document.getElementById('scanLine').style.display = 'none';
+        }
+    };
+
+    function setTag(type, val) {
+        if(type === 'cat') {
+            uploadData.cat = val;
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            const btn = document.getElementById(`btn-${val}`);
+            if(btn) btn.classList.add('active');
+        }
+    }
+
+    async function finalizeUpload() {
+        const tags = document.getElementById('tagsInput').value;
+        if(!uploadData.cat) return alert("Select Category");
+        const price = document.getElementById('priceInput').value || 0;
+        const btn = document.getElementById('saveBtn');
+        btn.innerText = "SAVING...";
+        const formData = new FormData();
+        if(uploadFile) formData.append('file', uploadFile);
+        formData.append('category', uploadData.cat);
+        formData.append('tags', tags);
+        formData.append('gender', currentGender);
+        formData.append('price', price);
+        let url = 'http://127.0.0.1:8000/upload';
+        if(editModeId) await fetch(`http://127.0.0.1:8000/items/${editModeId}`, { method: 'DELETE' });
+        await fetch(url, { method: 'POST', body: formData });
+        closeModal('uploadModal');
+        loadWardrobe();
+        btn.innerText = "SAVE";
+    }
+
+    async function loadWardrobe() {
+        try {
+            const res = await fetch(`http://127.0.0.1:8000/wardrobe?gender=${currentGender}`);
+            const items = await res.json();
+            itemCount = items.length;
+            updateLimitUI();
+            const grid = document.getElementById('wardrobeGrid');
+            grid.innerHTML = items.map(i => `<div class="grid-item group"><img src="${i.url}"><div class="action-btn btn-del" onclick="deleteItem('${i.id}')">✕</div><div class="action-btn btn-edit" onclick="editItem('${i.id}','${i.category}','${i.tags}',${i.price},'${i.url}')">✎</div></div>`).join('');
+        } catch(e) {}
+    }
+
+    function updateLimitUI() {
+        let limit = isPremium ? PREMIUM_LIMIT : FREE_LIMIT;
+        document.getElementById('limitText').innerText = `${itemCount}/${limit}`;
+        document.getElementById('limitBar').style.width = `${Math.min((itemCount / limit) * 100, 100)}%`;
+    }
+
+    async function deleteItem(id) {
+        if(confirm("Delete?")) { await fetch(`http://127.0.0.1:8000/items/${id}`, { method: 'DELETE' }); loadWardrobe(); }
+    }
+
+    
+    async function generateOutfit(style) {
+        document.querySelectorAll('.zone').forEach(z => z.innerHTML = '');
+        const budget = document.getElementById('budgetSel').value;
+        const res = await fetch(`http://127.0.0.1:8000/generate-outfit/${style}?budget=${budget}&gender=${currentGender}&season=${currentWeather.season}&weather=${currentWeather.cond}`);
+        const data = await res.json();
+        currentOutfits = data.outfits;
+        const optBox = document.getElementById('option-box');
+        optBox.innerHTML = currentOutfits.map((_, idx) => `<button onclick="showOption(${idx})" class="flex-1 py-2 bg-[#222] text-[10px] hover:bg-[#333] text-white border border-[#333]">OPT ${idx+1}</button>`).join('');
+        optBox.classList.remove('hidden');
+        showOption(0);
+    }
+
+    function showOption(idx) {
+        const outfit = currentOutfits[idx];
+        if(!outfit) return;
+        document.querySelectorAll('.zone').forEach(z => z.innerHTML = ''); 
+        Object.keys(outfit).forEach(cat => {
+            const zone = document.getElementById(`zone-${cat}`);
+            if(zone) {
+                let shopBadge = outfit[cat].is_ad ? `<div class="shop-badge" onclick="window.open('${outfit[cat].link}', '_blank')">SHOP</div>` : '';
+                zone.innerHTML = `<img src="${outfit[cat].img}" class="draggable"> ${shopBadge}`;
+                const img = zone.querySelector('img');
+                zone.onmousedown = dragElement;
+            }
+        });
+    }
+
+    function dragElement(e) {
+        const elmnt = e.currentTarget;
+        let pos1=0, pos2=0, pos3=0, pos4=0;
+        e.preventDefault(); pos3=e.clientX; pos4=e.clientY;
+        document.onmouseup=closeDragElement; document.onmousemove=elementDrag;
+        function elementDrag(e) {
+            e.preventDefault(); pos1=pos3-e.clientX; pos2=pos4-e.clientY; pos3=e.clientX; pos4=e.clientY;
+            elmnt.style.top=(elmnt.offsetTop-pos2)+"px"; elmnt.style.left=(elmnt.offsetLeft-pos1)+"px";
+        }
+        function closeDragElement() { document.onmouseup=null; document.onmousemove=null; }
+    }
+</script>
+</body>
+</html>
