@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+python-multipart
+requests
+google-generativeai
+pillow-heif
+rembg
+cloudinary
+pillow
+numpy
