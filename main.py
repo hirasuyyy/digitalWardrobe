@@ -1,7 +1,7 @@
+import os
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 os.environ["OMP_NUM_THREADS"] = "1"
 
-import os
 import uuid
 import sqlite3
 import random
@@ -10,7 +10,6 @@ import requests
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
 from PIL import Image, ImageOps
 from io import BytesIO
 import google.generativeai as genai
@@ -18,23 +17,24 @@ import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 
-# --- CLOUDINARY AYARLARI (Burayı Doldur) ---
+# --- API ANAHTARLARI (BURALARI DOLDUR) ---
 cloudinary.config( 
   cloud_name = "dv5fndevj", 
   api_key = "412538943184697", 
-  api_secret = "**********" 
+  api_secret = "*****************" 
 )
-# --- API KEYS ---
+
 GEMINI_API_KEY = "AIzaSyBKWsm-9gyNslpXWKdgFAZs7I9zxX4asLI" 
 REMOVE_BG_API_KEY = "FvDk6BLEEFbJVpJLtvWj9gjk" 
 
+# --- AI KONTROL ---
 GEMINI_ACTIVE = False
 try:
     if "SENIN" not in GEMINI_API_KEY:
         genai.configure(api_key=GEMINI_API_KEY)
         model = genai.GenerativeModel('gemini-1.5-flash')
         GEMINI_ACTIVE = True
-        print("✅ Gemini Active")
+        print("✅ Gemini Aktif")
 except: pass
 
 REMBG_AVAILABLE = False
@@ -42,14 +42,32 @@ try:
     from rembg import remove, new_session
     session = new_session("u2net_human_seg") 
     REMBG_AVAILABLE = True
-    print("✅ Rembg Active")
+    print("✅ Rembg Aktif")
 except: pass
 
-UPLOAD_DIR = "uploads"
-DB_NAME = "closet_master.db"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+DB_NAME = "closet_master_v2.db"
 
-# --- AFFILIATE DB ---
+def init_db():
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS items (id TEXT PRIMARY KEY, image_url TEXT, category TEXT, tags TEXT, gender TEXT, price REAL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+    conn.commit()
+    conn.close()
+init_db()
+
+app = FastAPI()
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
+# --- ANA SAYFA (GİRİŞ EKRANI) ---
+@app.get("/", response_class=HTMLResponse)
+async def read_root():
+    try:
+        with open("index.html", "r") as f:
+            return f.read()
+    except FileNotFoundError:
+        return "<h1>Error: index.html not found</h1>"
+
+# --- REKLAM DB ---
 AFFILIATE_DB = {
     "female": [
         {"id": "ad_f1", "category": "top", "tags": "dress red elegant gala", "img": "https://images.pexels.com/photos/985635/pexels-photo-985635.jpeg?auto=compress&cs=tinysrgb&w=600", "link": "#", "is_ad": True, "price": "45000", "tier": "high"},
@@ -59,59 +77,33 @@ AFFILIATE_DB = {
     ],
     "male": [
         {"id": "ad_m1", "category": "top", "tags": "suit tuxedo black gala", "img": "https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=600", "link": "#", "is_ad": True, "price": "35000", "tier": "high"},
-        {"id": "ad_m2", "category": "top", "tags": "hoodie streetwear", "img": "https://images.pexels.com/photos/6311392/pexels-photo-6311392.jpeg?auto=compress&cs=tinysrgb&w=600", "link": "#", "is_ad": True, "price": "1200", "tier": "mid"},
+        {"id": "ad_m2", "category": "top", "tags": "hoodie streetwear", "img": "https://images.pexels.com/photos/6311392/pexels-photo-6311392.jpeg?auto=compress&cs=tinysrgb&w=600", "link": "#", "is_ad": True, "price": 1200, "tier": "mid"},
     ]
 }
 
-def init_db():
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS items (id TEXT PRIMARY KEY, filename TEXT, category TEXT, tags TEXT, gender TEXT, price REAL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
-    conn.commit()
-    conn.close()
-init_db()
-
-app = FastAPI()
-@app.get("/", response_class=HTMLResponse)
-async def read_root():
-    with open("index.html", "r") as f:
-        return f.read()
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
-app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
-
-# --- FULL SCENARIO LOGIC ---
 STYLE_LOGIC = {
-    # NIGHT
     "night_cocktail": ["black", "midi", "silk", "heels", "elegant", "clutch", "suit"],
     "night_party": ["sparkle", "sequin", "mini", "silver", "gold", "leather", "boots", "cool"],
     "night_dinner": ["red", "black", "velvet", "romantic", "lace", "dress", "shirt"],
     "night_lounge": ["satin", "slip", "minimal", "mule", "chic", "trousers", "polo"],
     "night_concert": ["leather", "boots", "corset", "denim", "band", "cool", "sneaker"],
     "gala_wedding": ["gown", "elegant", "luxury", "crystal", "long", "tuxedo", "bow tie"],
-
-    # SPORT
     "sport_tennis": ["white", "skirt", "polo", "cap", "sneaker", "preppy", "shorts"],
     "sport_yoga": ["leggings", "bra", "tight", "comfy", "pastel", "mat"],
     "sport_gym": ["black", "shorts", "hoodie", "runner", "tech", "gym"],
     "sport_run": ["tracksuit", "sneaker", "windbreaker", "leggings", "cap", "running"],
     "sport_hike": ["boots", "cargo", "fleece", "backpack", "outdoor"],
     "ski": ["puffer", "jacket", "boots", "winter", "scarf", "beanie", "gloves"],
-
-    # SOCIAL
     "social_coffee": ["denim", "basic", "trench", "loafers", "casual", "beige", "jeans"],
     "social_brunch": ["floral", "colorful", "dress", "sandal", "cute", "pink", "linen"],
     "social_art": ["minimal", "black", "white", "architectural", "trousers", "blazer", "turtleneck"],
     "social_library": ["knit", "cardigan", "glasses", "loafer", "skirt", "preppy", "sweater"],
-    "school_casual": ["backpack", "hoodie", "jeans", "sneaker", "casual", "comfy", "denim"],
     "social_office": ["blazer", "shirt", "trousers", "smart", "watch", "loafers", "black"],
-
-    # TRAVEL
+    "school_casual": ["backpack", "hoodie", "jeans", "sneaker", "casual", "comfy", "denim"],
     "travel_city": ["comfortable", "layer", "jeans", "boots", "coat", "bag", "walking"],
     "travel_beach": ["linen", "white", "sandal", "shorts", "hat", "swim", "sunglasses"],
     "travel_summer": ["bikini", "swim", "resort", "colorful", "shorts", "hat"],
     "travel_culture": ["walking", "backpack", "comfortable", "modest", "cotton"],
-    
-    # VIBES
     "dark_feminine": ["black", "lace", "leather", "corset", "dark"],
     "old_money": ["navy", "cream", "tweed", "pearl", "polo", "cashmere"],
     "clean_girl": ["white", "beige", "slick", "gold", "basic"],
@@ -126,10 +118,7 @@ async def analyze_image(file: UploadFile = File(...)):
     try:
         contents = await file.read()
         image = Image.open(BytesIO(contents))
-        prompt = """Analyze this fashion item. Return JSON with:
-        1. 'category': [top, bottom, shoes, bag, jewelry, hat, gloves, socks, coat]
-        2. 'tags': comma separated keywords (e.g. "black, leather, sexy, winter")
-        Only return JSON."""
+        prompt = """Analyze fashion item. Return JSON: {"category": "...", "tags": "..."}"""
         response = model.generate_content([prompt, image])
         text = response.text.replace("```json", "").replace("```", "").strip()
         return json.loads(text)
@@ -139,11 +128,10 @@ async def analyze_image(file: UploadFile = File(...)):
 async def upload_item(file: UploadFile = File(...), category: str = Form(...), tags: str = Form(...), gender: str = Form(...), price: float = Form(...)):
     try:
         contents = await file.read()
-        try: import pillow_heif; pillow_heif.register_heif_opener(); 
-        except: pass
         input_image = Image.open(BytesIO(contents)).convert("RGBA")
         input_image = ImageOps.exif_transpose(input_image)
         
+        # 1. Arka Planı Sil
         bg_removed = False
         if "SENIN" not in REMOVE_BG_API_KEY:
             try:
@@ -158,15 +146,20 @@ async def upload_item(file: UploadFile = File(...), category: str = Form(...), t
             try: input_image = remove(input_image, session=session, alpha_matting=True)
             except: pass
 
-        unique_name = f"{uuid.uuid4()}.png"
-        file_path = os.path.join(UPLOAD_DIR, unique_name)
-        input_image.save(file_path, format="PNG")
+        # 2. Cloudinary'ye Yükle
+        img_byte_arr = BytesIO()
+        input_image.save(img_byte_arr, format="PNG")
+        img_byte_arr.seek(0)
         
+        upload_result = cloudinary.uploader.upload(img_byte_arr, folder="vogue_closet")
+        cloud_url = upload_result["secure_url"]
+        
+        # 3. DB Kayıt
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
         item_id = str(uuid.uuid4())
-        c.execute("INSERT INTO items (id, filename, category, tags, gender, price) VALUES (?, ?, ?, ?, ?, ?)", 
-                  (item_id, unique_name, category, tags, gender, price))
+        c.execute("INSERT INTO items (id, image_url, category, tags, gender, price) VALUES (?, ?, ?, ?, ?, ?)", 
+                  (item_id, cloud_url, category, tags, gender, price))
         conn.commit()
         conn.close()
         return {"status": "saved"}
@@ -199,7 +192,7 @@ def get_all_items(gender: str = "female"):
     items = [dict(row) for row in c.fetchall()]
     conn.close()
     for item in items:
-        item['url'] = f"http://127.0.0.1:8000/uploads/{item['filename']}"
+        item['url'] = item['image_url'] 
         item['is_ad'] = False
     return items
 
@@ -213,7 +206,7 @@ def generate_outfit(style: str, gender: str = "female", budget: str = "mid", sea
     conn.close()
     
     for item in user_items:
-        item['url'] = f"http://127.0.0.1:8000/uploads/{item['filename']}"
+        item['url'] = item['image_url']
         item['is_ad'] = False
 
     target_tags = STYLE_LOGIC.get(style, [])
@@ -235,10 +228,8 @@ def generate_outfit(style: str, gender: str = "female", budget: str = "mid", sea
                         if t in tags: score += 50
                     
                     if season == "winter":
-                        if "coat" in tags or "jacket" in tags or "boots" in tags: score += 100
-                        if "sandal" in tags or "linen" in tags: score -= 500
-                    if weather == "rainy":
-                        if "suede" in tags: score -= 500
+                        if "coat" in tags or "boots" in tags: score += 100
+                        if "sandal" in tags: score -= 500
                     
                     score += random.randint(0, 40)
                     if score > 0: candidates.append({"data": item, "score": score})
