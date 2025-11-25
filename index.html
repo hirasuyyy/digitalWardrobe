@@ -34,13 +34,14 @@
         
         .stage { flex: 1; position: relative; background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%); display: flex; justify-content: center; align-items: center; }
         #collage-container { width: 100%; height: 100%; position: relative; }
-        
+        .vogue-logo { position: absolute; top: 5%; left: 50%; transform: translateX(-50%); font-family: 'Cinzel', serif; font-size: 100px; color: rgba(255,255,255,0.03); pointer-events: none; z-index: 0; letter-spacing: 15px; }
+
         /* ZONES */
         .zone { position: absolute; display: flex; justify-content: center; align-items: center; cursor: grab; transition: all 0.5s ease; }
         .zone:active { cursor: grabbing; transform: scale(1.05); }
         .zone img { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.7)); transition: transform 0.3s; }
         
-        /* LAYOUT */
+        /* AUTO-FIT LAYOUT */
         #zone-top { top: 12%; left: 30%; width: 40%; height: 35%; z-index: 10; }
         #zone-bottom { top: 45%; left: 30%; width: 40%; height: 40%; z-index: 9; }
         #zone-shoes { bottom: 2%; left: 30%; width: 40%; height: 20%; z-index: 11; }
@@ -76,6 +77,7 @@
         .cal-cell:hover { border-color: var(--accent); }
         .cal-num { position: absolute; top: 2px; left: 4px; font-size: 10px; color: #555; }
         .cal-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
+        .cal-dot { width: 4px; height: 4px; background: var(--accent); border-radius: 50%; margin-top: 2px; }
 
         .nav-bar { display: grid; grid-template-columns: repeat(4, 1fr); background: #0a0a0a; border-top: 1px solid #222; padding: 10px 0; }
         .nav-item { display: flex; flex-direction: column; align-items: center; color: #666; cursor: pointer; transition: 0.3s; }
@@ -103,21 +105,11 @@
 <body>
 
 <div id="landing-page">
-    <h1 class="landing-logo ">DIGITAL WARDROBE</h1>
-    <p class="landing-text">UPLOAD PHOTOS OF YOUR OUTFITS AND GET READY-MADE LOOKS IN YOUR DIGITAL WARDROBE</p>
-    <button class="enter-btn px-6 py-3 
-         rounded-lg 
-         bg-[#c9b037]
-         border border-[rgba(255,0,80,0.35)]
-         text-[#e8d5e8]
-         font-semibold tracking-wide 
-         shadow-[0_0_18px_rgba(255,0,90,0.15)]
-         hover:bg-[#a67509]
-         hover:text-white
-         hover:border-[rgba(255,0,110,0.6)]
-         hover:shadow-[0_0_30px_rgba(255,0,110,0.35)]
-         transition-all duration-300 ease-out
-         hover:-translate-y-1 hover:scale-[1.02]" onclick="enterApp()">ENTER STUDIO</button>
+    <h1 class="landing-logo serif">DIGITAL WARDROBE</h1>
+    <p class="landing-text">
+        Dijital dolabın: Gerçek hayattaki tüm kıyafetlerini yükle ve kombinlerin hazır olsun.
+    </p>
+    <button class="enter-btn" onclick="enterApp()">ENTER STUDIO</button>
 </div>
 
 <div class="app-frame">
@@ -208,9 +200,17 @@
     <div class="stage">
         <button onclick="captureAndCalendar()" class="absolute top-4 right-4 z-50 text-xs text-gray-500 hover:text-white border border-[#333] px-3 py-1 rounded-full bg-black"><i class="fa-solid fa-calendar-check"></i> SAVE</button>
         
-        
+        <div class="vogue-logo" id="brandLogo">DIGITAL</div>
         <div id="collage-container">
-            <div id="zone-hat" class="zone draggable"></div><div id="zone-jewelry" class="zone draggable"></div><div id="zone-top" class="zone draggable"></div><div id="zone-coat" class="zone draggable"></div><div id="zone-gloves" class="zone draggable"></div><div id="zone-bag" class="zone draggable"></div><div id="zone-bottom" class="zone draggable"></div><div id="zone-tights" class="zone draggable"></div><div id="zone-shoes" class="zone draggable"></div>
+            <div id="mannequin-container">
+                <img id="baseModelImg" src="model.png" onerror="this.style.display='none'" style="height: 95%; width: auto; object-fit: contain; filter: invert(1) opacity(0.8);">
+                
+                <div id="zone-hat" class="zone draggable"></div><div id="zone-jewelry" class="zone draggable"></div>
+                <div id="zone-top" class="zone draggable"></div><div id="zone-coat" class="zone draggable"></div>
+                <div id="zone-gloves" class="zone draggable"></div><div id="zone-bag" class="zone draggable"></div>
+                <div id="zone-bottom" class="zone draggable"></div><div id="zone-tights" class="zone draggable"></div>
+                <div id="zone-shoes" class="zone draggable"></div>
+            </div>
             <div id="placeholderText" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-30 text-center">
                 <p class="serif text-3xl text-[#333]">EDITORIAL</p>
                 <p class="text-[10px] uppercase tracking-[0.5em] text-gray-600 mt-2">Select Scenario</p>
@@ -288,7 +288,7 @@
             <div class="flex justify-between items-center border-b border-[#222] pb-2">
                 <div>
                     <span class="text-[10px] uppercase text-[var(--accent)] block">Budget</span>
-                    <span class="text-[8px] text-gray-600">It customizes suggestions according to your budget.</span>
+                    <span class="text-[8px] text-gray-600">Önerileri bütçene göre kişiselleştirir</span>
                 </div>
                 <select id="budgetSel" class="bg-[#111] text-white text-xs border border-[#333] p-1 rounded"><option value="low">Economy</option><option value="mid" selected>Standard</option><option value="high">Luxury</option></select>
             </div>
@@ -331,7 +331,7 @@
         </div>
         <div class="flex justify-between items-center mt-4 mb-4">
             <span class="text-xs text-gray-500">Total</span>
-            <span class="text-lg font-bold text-white">3.99 €</span>
+            <span class="text-lg font-bold text-white">69.99 TL</span>
         </div>
         <button onclick="processPayment()" id="payBtn" class="w-full py-3 bg-[var(--accent)] text-white font-bold text-xs rounded shadow-lg">PAY NOW</button>
         <button onclick="closeModal('paymentModal')" class="w-full mt-2 text-gray-600 text-[9px]">CANCEL</button>
@@ -376,7 +376,7 @@
 
 <div id="premiumModal" class="modal-bg">
     <div class="modal-content text-center border border-[var(--accent)] p-8 shadow-[0_0_40px_rgba(198,168,124,0.2)]">
-        <h2 class="text-3xl text-[var(--accent)] serif mb-2"><span class="text-white">+</span></h2>
+        <h2 class="text-3xl text-[var(--accent)] serif mb-2">VOGUE<span class="text-white">+</span></h2>
         <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em]">Limit Reached</p>
         <button onclick="openPayment(); closeModal('premiumModal');" class="w-full py-4 bg-gradient-to-r from-[var(--accent)] to-[#a38655] text-black font-bold text-sm tracking-widest rounded-xl shadow-lg hover:scale-105 transition mt-6">UPGRADE - 69.99 TL</button>
         <button onclick="closeModal('premiumModal')" class="w-full text-[10px] text-gray-500 uppercase mt-3">Maybe Later</button>
@@ -417,8 +417,6 @@
 
     window.onload = async () => {
         loadWardrobe();
-        fetchWeather();
-        
         const today = new Date();
         document.getElementById('calMonth').value = today.getMonth();
         document.getElementById('calYear').value = today.getFullYear();
@@ -613,11 +611,11 @@
         document.getElementById('btnMasc').classList.toggle('active', g==='male');
         if(g==='male') {
             document.body.classList.add('male-theme');
-            document.getElementById('brandLogo').innerText = "";
+            document.getElementById('brandLogo').innerText = "GQ STYLE";
             document.getElementById('appTitle').innerHTML = `GQ<span style="color:var(--accent)">.AI</span>`;
         } else {
             document.body.classList.remove('male-theme');
-            document.getElementById('brandLogo').innerText = "";
+            document.getElementById('brandLogo').innerText = "DIGITAL";
             document.getElementById('appTitle').innerHTML = `DIGITAL<span style="color:var(--accent)">WARDROBE</span>`;
         }
         loadWardrobe(); 
@@ -708,7 +706,6 @@
         if(confirm("Delete?")) { await fetch(`http://127.0.0.1:8000/items/${id}`, { method: 'DELETE' }); loadWardrobe(); }
     }
 
-    
     async function generateOutfit(style) {
         document.querySelectorAll('.zone').forEach(z => z.innerHTML = '');
         const budget = document.getElementById('budgetSel').value;
