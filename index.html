@@ -331,7 +331,7 @@
         </div>
         <div class="flex justify-between items-center mt-4 mb-4">
             <span class="text-xs text-gray-500">Total</span>
-            <span class="text-lg font-bold text-white">69.99 TL</span>
+            <span class="text-lg font-bold text-white">3.99 € </span>
         </div>
         <button onclick="processPayment()" id="payBtn" class="w-full py-3 bg-[var(--accent)] text-white font-bold text-xs rounded shadow-lg">PAY NOW</button>
         <button onclick="closeModal('paymentModal')" class="w-full mt-2 text-gray-600 text-[9px]">CANCEL</button>
@@ -645,7 +645,7 @@
             const formData = new FormData();
             formData.append('file', uploadFile);
             try {
-                const res = await fetch('http://127.0.0.1:8000/analyze', { method: 'POST', body: formData });
+                const res = await fetch('/analyze', { method: 'POST', body: formData });
                 const data = await res.json();
                 if(data.category) setTag('cat', data.category);
                 if(data.tags) document.getElementById('tagsInput').value = data.tags;
@@ -677,8 +677,8 @@
         formData.append('tags', tags);
         formData.append('gender', currentGender);
         formData.append('price', price);
-        let url = 'http://127.0.0.1:8000/upload';
-        if(editModeId) await fetch(`http://127.0.0.1:8000/items/${editModeId}`, { method: 'DELETE' });
+        let url = '/upload';
+        if(editModeId) await fetch(`/items/${editModeId}`, { method: 'DELETE' });
         await fetch(url, { method: 'POST', body: formData });
         closeModal('uploadModal');
         loadWardrobe();
@@ -687,7 +687,7 @@
 
     async function loadWardrobe() {
         try {
-            const res = await fetch(`http://127.0.0.1:8000/wardrobe?gender=${currentGender}`);
+            const res = await fetch(`/wardrobe?gender=${currentGender}`);
             const items = await res.json();
             itemCount = items.length;
             updateLimitUI();
@@ -703,13 +703,13 @@
     }
 
     async function deleteItem(id) {
-        if(confirm("Delete?")) { await fetch(`http://127.0.0.1:8000/items/${id}`, { method: 'DELETE' }); loadWardrobe(); }
+        if(confirm("Delete?")) { await fetch(`/items/${id}`, { method: 'DELETE' }); loadWardrobe(); }
     }
 
     async function generateOutfit(style) {
         document.querySelectorAll('.zone').forEach(z => z.innerHTML = '');
         const budget = document.getElementById('budgetSel').value;
-        const res = await fetch(`http://127.0.0.1:8000/generate-outfit/${style}?budget=${budget}&gender=${currentGender}&season=${currentWeather.season}&weather=${currentWeather.cond}`);
+        const res = await fetch(`/generate-outfit/${style}?budget=${budget}&gender=${currentGender}&season=${currentWeather.season}&weather=${currentWeather.cond}`);
         const data = await res.json();
         currentOutfits = data.outfits;
         const optBox = document.getElementById('option-box');
