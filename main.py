@@ -21,7 +21,7 @@ import cloudinary.api
 cloudinary.config( 
   cloud_name = "dv5fndevj", 
   api_key = "412538943184697", 
-  api_secret = "*****************" 
+  api_secret = "**********" 
 )
 
 GEMINI_API_KEY = "AIzaSyBKWsm-9gyNslpXWKdgFAZs7I9zxX4asLI" 
